@@ -1,57 +1,42 @@
 import pandas as pd
-import numpy as np
+from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
-import pickle
+from lahman_model import pitcher_model, hitter_model
 
-def load_data(batting_filepath, pitching_filepath):
-    """Load test data from csv files."""
+# Load the test data
+pitcher_test_data = pd.read_csv('pitcher_test_data.csv')
+hitter_test_data = pd.read_csv('hitter_test_data.csv')
 
-    batting_data = pd.read_csv(batting_filepath)
-    pitching_data = pd.read_csv(pitching_filepath)
+# Define the target variable and features for pitchers
+pitcher_target = 'proj_DK_pts_per_inn'
+pitcher_features = ['ERA', 'WHIP', 'K/9', 'BB/9', 'HR/9', 'FIP', 'xFIP', 'SwStr%', 'LOB%']
 
-    # Combine data and add player positions
-    batting_data['position'] = 'B'
-    pitching_data['position'] = 'P'
-    test_data = pd.concat([batting_data, pitching_data])
+# Prepare the test data for pitchers
+X_pitcher_test = pitcher_test_data[pitcher_features]
+y_pitcher_test = pitcher_test_data[pitcher_target]
+scaler_pitcher = StandardScaler()
+X_pitcher_test_scaled = scaler_pitcher.transform(X_pitcher_test)
 
-    return test_data
+# Make predictions on the test data for pitchers
+y_pitcher_pred = pitcher_model.predict(X_pitcher_test_scaled)
 
-def preprocess_data(test_data):
-    """Preprocess test data to be compatible with the model."""
+# Evaluate the performance of the pitcher model on the test data
+pitcher_RMSE = mean_squared_error(y_pitcher_test, y_pitcher_pred, squared=False)
+print('Pitcher Root Mean Squared Error:', pitcher_RMSE)
 
-    # Remove unnecessary columns and fill NaN values
-    test_data = test_data.drop(columns=['playerID', 'yearID'])
-    test_data = test_data.fillna(value=0)
+# Define the target variable and features for hitters
+hitter_target = 'proj_DK_pts_per_PA'
+hitter_features = ['AVG', 'OBP', 'SLG', 'OPS', 'wOBA', 'wRC+', 'WAR', 'ISO', 'BB%', 'K%']
 
-    # Standardize numerical features
-    numerical_features = ['G', 'AB', 'R', 'H', '2B', '3B', 'HR', 'RBI', 'SB', 'CS', 'BB', 'SO', 'IBB', 'HBP', 'SH', 'SF', 'GIDP']
-    scaler = StandardScaler()
-    test_data[numerical_features] = scaler.fit_transform(test_data[numerical_features])
+# Prepare the test data for hitters
+X_hitter_test = hitter_test_data[hitter_features]
+y_hitter_test = hitter_test_data[hitter_target]
+scaler_hitter = StandardScaler()
+X_hitter_test_scaled = scaler_hitter.transform(X_hitter_test)
 
-    return test_data
+# Make predictions on the test data for hitters
+y_hitter_pred = hitter_model.predict(X_hitter_test_scaled)
 
-def main():
-    # Set filepaths for test data csv files
-    batting_filepath = 'test_batting_data.csv'
-    pitching_filepath = 'test_pitching_data.csv'
-
-    # Load test data
-    test_data = load_data(batting_filepath, pitching_filepath)
-
-    # Preprocess test data
-    preprocessed_data = preprocess_data(test_data)
-
-    # Save preprocessed data as .pkl file
-    with open('test_preprocessed_data.pkl', 'wb') as f:
-        pickle.dump(preprocessed_data, f)
-
-    # Print out information about the preprocessed data
-    n_samples = len(preprocessed_data)
-    positions = preprocessed_data['position'].unique()
-    n_batters = len(preprocessed_data[preprocessed_data['position'] == 'B'])
-    n_pitchers = len(preprocessed_data[preprocessed_data['position'] == 'P'])
-    print(f'Test data preprocessed. {n_samples} preprocessed samples found, including {n_batters} batters and {n_pitchers} pitchers.')
-    print(f'Positions found: {positions}')
-
-if __name__ == '__main__':
-    main()
+# Evaluate the performance of the hitter model on the test data
+hitter_RMSE = mean_squared_error(y_hitter_test, y_hitter_pred, squared=False)
+print('Hitter Root Mean Squared Error:', hitter_RMSE)
