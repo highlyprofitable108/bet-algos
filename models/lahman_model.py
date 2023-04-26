@@ -1,102 +1,102 @@
+```python
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
-from sklearn.linear_model import LinearRegression, Lasso, Ridge
-from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import StandardScaler
 
-# Load the data
-pitcher_data = pd.read_csv('pitcher_data.csv')
-hitter_data = pd.read_csv('hitter_data.csv')
+# Define constants
+SALARY_CAP = 50000
 
-# Data exploration and visualization for pitchers
-pitcher_target = 'proj_DK_pts_per_inn'
-pitcher_features = ['ERA', 'WHIP', 'K/9', 'BB/9', 'HR/9', 'FIP', 'xFIP', 'SwStr%', 'LOB%']
-pitcher_df = pitcher_data[pitcher_features + [pitcher_target]]
-sns.pairplot(pitcher_df)
-plt.show()
-corr = pitcher_df.corr()
-sns.heatmap(corr, annot=True, cmap='coolwarm')
-plt.show()
+def load_data():
+    # Load Lahman data
+    lahman_data = pd.read_csv('data/lahman.csv')
 
-# Data exploration and visualization for hitters
-hitter_target = 'proj_DK_pts_per_PA'
-hitter_features = ['AVG', 'OBP', 'SLG', 'OPS', 'wOBA', 'wRC+', 'WAR', 'ISO', 'BB%', 'K%']
-hitter_df = hitter_data[hitter_features + [hitter_target]]
-sns.pairplot(hitter_df)
-plt.show()
-corr = hitter_df.corr()
-sns.heatmap(corr, annot=True, cmap='coolwarm')
-plt.show()
+    # Convert salary data to integers
+    lahman_data['salary'] = lahman_data['salary'].astype(int)
 
-# Prepare the data for training for pitchers
-X_pitcher = pitcher_data[pitcher_features]
-y_pitcher = pitcher_data[pitcher_target]
-scaler_pitcher = StandardScaler()
-X_pitcher_scaled = scaler_pitcher.fit_transform(X_pitcher)
+    return lahman_data
 
-# Cross-validation for pitchers
-pitcher_models = [LinearRegression(), Lasso(), Ridge()]
-for model in pitcher_models:
-    scores = cross_val_score(model, X_pitcher_scaled, y_pitcher, cv=5, scoring='neg_root_mean_squared_error')
-    print(f"{model.__class__.__name__} RMSE: {-scores.mean():.2f} +/- {scores.std():.2f}")
+def train_model(data):
+    # Split data into features and target
+    X = data.drop(['name', 'salary', 'position', 'team'], axis=1)
+    y = data['salary']
 
-# Hyperparameter tuning for pitchers
-param_grid = {'alpha': np.logspace(-3, 3, 7)}
-pitcher_lasso = Lasso()
-pitcher_ridge = Ridge()
-pitcher_lasso_cv = GridSearchCV(pitcher_lasso, param_grid, cv=5, scoring='neg_root_mean_squared_error')
-pitcher_ridge_cv = GridSearchCV(pitcher_ridge, param_grid, cv=5, scoring='neg_root_mean_squared_error')
-pitcher_lasso_cv.fit(X_pitcher_scaled, y_pitcher)
-pitcher_ridge_cv.fit(X_pitcher_scaled, y_pitcher)
-print(f"Lasso RMSE: {-pitcher_lasso_cv.best_score_:.2f} (alpha={pitcher_lasso_cv.best_params_['alpha']})")
-print(f"Ridge RMSE: {-pitcher_ridge_cv.best_score_:.2f} (alpha={pitcher_ridge_cv.best_params_['alpha']})")
+    # Train a linear regression model
+    from sklearn.linear_model import LinearRegression
+    model = LinearRegression()
+    model.fit(X, y)
 
-# Train a linear regression model for pitchers with the best hyperparameters
-pitcher_model = Ridge(alpha=pitcher_ridge_cv.best_params_['alpha'])
-X_pitcher_train, X_pitcher_test, y_pitcher_train, y_pitcher_test = train_test_split(X_pitcher_scaled, y_pitcher, test_size=0.2, random_state=42)
-pitcher_model.fit(X_pitcher_train, y_pitcher_train)
+    return model
 
-# Make predictions on the test data for pitchers
-y_pitcher_pred = pitcher_model.predict(X_pitcher_test)
+def get_predictions(model, data):
+    # Make predictions on the data
+    X = data.drop(['name', 'salary', 'position', 'team'], axis=1)
+    predictions = model.predict(X)
 
-# Evaluate the performance of the pitcher model
-pitcher_RMSE = mean_squared_error(y_pitcher_test, y_pitcher_pred, squared=False)
-print('Pitcher Root Mean Squared Error:', pitcher_RMSE)
+    # Combine predictions with player names and positions
+    data = data[['name', 'position', 'salary']].copy()
+    data['predicted_score'] = predictions
 
-# Prepare the data for training for hitters
-X_hitter = hitter_data[hitter_features]
-y_hitter = hitter_data[hitter_target]
-scaler_hitter = StandardScaler()
-X_hitter_scaled = scaler_hitter.fit_transform(X_hitter)
+    return data
 
-# Cross-validation for hitters
-hitter_models = [LinearRegression(), Lasso(), Ridge()]
-for model in hitter_models:
-    scores = cross_val_score(model, X_hitter_scaled, y_hitter, cv=5, scoring='neg_root_mean_squared_error')
-    print(f"{model.__class__.__name__} RMSE: {-scores.mean():.2f} +/- {scores.std():.2f}")
+def get_optimal_lineup(predictions, pricing):
+    # Combine predictions and pricing data
+    data = pd.concat([predictions, pricing], axis=1)
 
-# Hyperparameter tuning for hitters
-param_grid = {'alpha': np.logspace(-3, 3, 7)}
-hitter_lasso = Lasso()
-hitter_ridge = Ridge()
-hitter_lasso_cv = GridSearchCV(hitter_lasso, param_grid, cv=5, scoring='neg_root_mean_squared_error')
-hitter_ridge_cv = GridSearchCV(hitter_ridge, param_grid, cv=5, scoring='neg_root_mean_squared_error')
-hitter_lasso_cv.fit(X_hitter_scaled, y_hitter)
-hitter_ridge_cv.fit(X_hitter_scaled, y_hitter)
-print(f"Lasso RMSE: {-hitter_lasso_cv.best_score_:.2f} (alpha={hitter_lasso_cv.best_params_['alpha']})")
-print(f"Ridge RMSE: {-hitter_ridge_cv.best_score_:.2f} (alpha={hitter_ridge_cv.best_params_['alpha']})")
+    # Sort by predicted score in descending order
+    data = data.sort_values(by='predicted_score', ascending=False)
 
-# Train a linear regression model for hitters with the best hyperparameters
-hitter_model = Ridge(alpha=hitter_ridge_cv.best_params_['alpha'])
-X_hitter_train, X_hitter_test, y_hitter_train, y_hitter_test = train_test_split(X_hitter_scaled, y_hitter, test_size=0.2, random_state=42)
-hitter_model.fit(X_hitter_train, y_hitter_train)
+    # Select the top 9 players by predicted score
+    top_players = data.head(9)
 
-# Make predictions on the test data for hitters
-y_hitter_pred = hitter_model.predict(X_hitter_test)
+    # Calculate the total cost of the top players
+    total_cost = top_players['salary'].sum()
 
-# Evaluate the performance of the hitter model
-hitter_RMSE = mean_squared_error(y_hitter_test, y_hitter_pred, squared=False)
-print('Hitter Root Mean Squared Error:', hitter_RMSE)
+    # Check if total cost is within the salary cap
+    if total_cost > SALARY_CAP:
+        # If total cost is over the salary cap, select the top 9 players within the salary cap
+        top_players = data[data['salary'] <= SALARY_CAP].head(9)
+
+    # Sort by position and then by predicted score in descending order
+    top_players = top_players.sort_values(by=['position', 'predicted_score'], ascending=[True, False])
+
+    # Create the lineup as a list of dictionaries
+    lineup = []
+    for _, row in top_players.iterrows():
+        player = {'name': row['name'], 'position': row['position'], 'price': row['salary']}
+        lineup.append(player)
+
+    return lineup
+
+def main():
+    # Load data
+    data = load_data()
+
+    # Train model
+    model = train_model(data)
+
+    # Loop through dates and generate top 10 lineups for each day
+    for date in pd.date_range(start='2022-01-01', end='2022-01-10'):
+        # Filter data for current date
+        date_data = data[data['date'] == date]
+
+        # Get predictions for current date
+        predictions = get_predictions(model, date_data)
+
+        # Load pricing data for current date
+        pricing_file = f"data/pricing_{date.strftime('%Y-%m-%d')}.csv"
+        pricing = pd.read_csv(pricing_file)
+
+        # Generate top 10 lineups for current date
+        for i in range(10):
+            # Get optimal lineup
+            lineup = get_optimal_lineup(predictions, pricing)
+
+            # Write lineup to file
+            with open(f"output/lineup_{date.strftime('%Y-%m-%d')}_{i+1}.txt", 'w') as f:
+                for player in lineup:
+                    f.write(f"{player['name']} ({player['position']}) - ${player['salary']}\n")
+
+            # Remove players from pricing data
+            for player in lineup:
+                pricing = pricing[pricing['name'] != player['name']]
+
+if __name__ == '__main__':
+    main()
