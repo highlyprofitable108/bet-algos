@@ -1,0 +1,28 @@
+name: Update Repo
+
+on:
+  push:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Download and Add CSV
+        run: |
+          cd /github/workspace/data
+          mv lahman_data.csv "lahman_data_$(date +%Y-%m-%d).csv"
+          curl -O http://seanlahman.com/files/database/lahman-csv_2014-02-14.zip
+          unzip lahman-csv_2014-02-14.zip
+          mv lahman-csv_2014-02-14/Master.csv lahman_data.csv
+          git add lahman_data.csv
+          git commit -m "Add Lahman consolidated data file"
+          git push
