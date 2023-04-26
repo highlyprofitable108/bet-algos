@@ -41,5 +41,9 @@ jobs:
         run: python tests/test_data_load.py
       - name: Test model
         run: python tests/test_model.py
+      - name: Test DraftKings pricing
+        run: python tests/test_dk.py
+      - name: Test FanDuel pricing
+        run: python tests/test_fd.py
       - name: Run model
         run: python models/lahman_model.py
