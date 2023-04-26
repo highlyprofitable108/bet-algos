@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navigate to the Git repository directory
-cd https://github.com/mikefusc/mlb-forest-and-neural.git
+cd /github/workspace
 
 # Download the Lahman consolidated data file
 curl -O http://seanlahman.com/files/database/lahman-csv_2014-02-14.zip
