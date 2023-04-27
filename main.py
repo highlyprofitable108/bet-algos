@@ -18,7 +18,7 @@ def load_data():
     # Clean the data
     if 'Rk' in br_data.columns:
         br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
-    br_data = br_data.rename(columns={'Name': 'name'})
+        br_data = br_data.rename(columns={'Name': 'name'})
 
     # Retrieve data from FanGraphs
     fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2021&month=0&season1=2021&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
@@ -31,7 +31,7 @@ def load_data():
 
 
     # Match Baseball-Reference player names to FanGraphs player names
-    br_data['name'] = br_data['Player'].str.replace('[^\w\s]','').str.lower()
+    br_data['name'] = br_data['name'].str.replace('[^\w\s]','').str.lower()
     fg_data['name'] = fg_data['Name'].str.replace('[^\w\s]','').str.lower()
 
 	# Merge the data
