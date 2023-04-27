@@ -29,13 +29,15 @@ def load_data():
         fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
     fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus'})
 
-    # Print out the column names of the dataframes
-    print('Baseball-Reference columns:', br_data.columns)
-    print('FanGraphs columns:', fg_data.columns)
 
-    # Merge the data
+    # Match Baseball-Reference player names to FanGraphs player names
+    br_data['name'] = br_data['Player'].str.replace('[^\w\s]','').str.lower()
+    fg_data['name'] = fg_data['Name'].str.replace('[^\w\s]','').str.lower()
+
+	# Merge the data
     data = pd.merge(br_data, fg_data, on='name')
 
+    
     return data
 
 def train_model(data):
