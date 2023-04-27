@@ -28,10 +28,6 @@ def load_data():
         print(f"Table {i}:")
         print(table.head())
 
-    # fg_data = fg_tables[correct_table_index]
-    fg_data.columns = ['name', 'team', 'games', 'plate_appearances', 'home_runs', 'runs', 'runs_batted_in', 'stolen_bases', 'walk_percentage', 'strikeout_percentage', 'isolated_power', 'batting_average_on_balls_in_play', 'batting_average', 'on_base_percentage', 'slugging_percentage', 'weighted_on_base_average', 'weighted_runs_created_plus']
-
-
     # Clean the data
     if 'RK' in fg_data.columns:
         fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
