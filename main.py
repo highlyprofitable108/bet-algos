@@ -8,7 +8,7 @@ import lxml
 SALARY_CAP = 50000
 
 # Set up OpenAI API credentials
-openai.api_key = 'YOUR_API_KEY'
+openai.api_key = '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'
 
 def load_data():
     # Retrieve data from Baseball-Reference
