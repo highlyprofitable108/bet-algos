@@ -1,10 +1,13 @@
+import openai
 import datetime
 import pandas as pd
 import numpy as np
-import lxml
 
 # Define constants
 SALARY_CAP = 50000
+
+# Set up OpenAI API credentials
+openai.api_key = 'YOUR_API_KEY'
 
 def load_data():
     # Retrieve data from Baseball-Reference
@@ -132,43 +135,47 @@ def get_optimal_lineup(data, num_simulations=50000):
 
     return optimal_lineup
 
-def main():
+def get_lineup_explanations(lineups):
+    # Generate explanations for each lineup
+    explanations = []
+    for lineup in lineups:
+        # Generate text prompt for OpenAI API
+        prompt = f"Explain the reasoning behind the optimal baseball lineup for today's games: {', '.join([player['name'] for player in lineup])}"
+
+        # Call OpenAI API to generate explanation
+        response = openai.Completion.create(
+            engine='text-davinci-002',
+            prompt=prompt,
+            max_tokens=1024,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+
+        # Extract explanation from API response
+        explanation = response.choices[0].text.strip()
+        explanations.append(explanation)
+
+    return explanations
+
+if __name__ == '__main__':
     # Load data
     data = load_data()
 
-    # Generate pricing data for today's date
-    date = datetime.date.today().strftime('%Y-%m-%d')
-    pricing_data = pd.DataFrame({'name': data['name'], 'position': data['position'], 'salary': data['salary']})
-
-    # Train model and get predictions
+    # Train model and make predictions
     model = train_model(data)
-    predictions = get_predictions(model, data)
+    data = get_predictions(model, data)
 
-    # Generate top 10 lineups for today's date
-    top_lineups = []
-    for i in range(10):
-        # Get optimal lineup
-        lineup = get_optimal_lineup(predictions)
+    # Generate optimal lineup
+    lineups = [get_optimal_lineup(data) for _ in range(10)]
 
-        # Write lineup to file
-        with open(f"output/lineup_{date}_{i+1}.txt", 'w') as f:
-            f.write(f"Lineup {i+1}:\n")
-            for player in lineup:
-                f.write(f"{player['name']} ({player['position']}) - ${player['salary']} - {player['projected_points']:.2f} points - {player['expected_points']:.2f}% of expected points\n")
-            f.write(f"Total salary: ${sum(player['salary'] for player in lineup)}\n")
-            f.write(f"Expected points: {expected_points:.2f}\n")
+    # Generate explanations for each lineup
+    explanations = get_lineup_explanations(lineups)
 
-        # Add lineup to list of top lineups
-        top_lineups.append(lineup)
-
-    # Print top 10 lineups
-    print(f"Top 10 lineups for {date}:")
-    for i, lineup in enumerate(top_lineups):
-        print(f"Lineup {i+1}:")
+    # Print the lineup and explanation for each simulation
+    for i, lineup in enumerate(lineups):
+        print(f"Simulation {i+1}:")
         for player in lineup:
-            print(f"{player['name']} - ${player['salary']}")
-        print(f"Total salary: ${sum(player['salary'] for player in lineup)}")
+            print(f"{player['name']} ({player['position']}): ${player['salary']}, {player['projected_points']:.2f} projected points, {player['expected_points']:.2f}% of total points")
+        print(f"Explanation: {explanations[i]}")
         print()
-
-if __name__ == '__main__':
-    main()
