@@ -23,6 +23,14 @@ def load_data():
     # Retrieve data from FanGraphs
     fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2021&month=0&season1=2021&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
     fg_data = pd.read_html(fg_url)[10]
+    fg_tables = pd.read_html(fg_url)
+    for i, table in enumerate(fg_tables):
+        print(f"Table {i}:")
+        print(table.head())
+
+    fg_data = fg_tables[correct_table_index]
+    fg_data.columns = ['name', 'team', 'games', 'plate_appearances', 'home_runs', 'runs', 'runs_batted_in', 'stolen_bases', 'walk_percentage', 'strikeout_percentage', 'isolated_power', 'batting_average_on_balls_in_play', 'batting_average', 'on_base_percentage', 'slugging_percentage', 'weighted_on_base_average', 'weighted_runs_created_plus']
+
 
     # Clean the data
     if 'RK' in fg_data.columns:
