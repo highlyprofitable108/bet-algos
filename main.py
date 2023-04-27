@@ -2,6 +2,7 @@ import openai
 import datetime
 import pandas as pd
 import numpy as np
+import lxml
 
 # Define constants
 SALARY_CAP = 50000
