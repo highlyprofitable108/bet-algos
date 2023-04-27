@@ -10,6 +10,8 @@ SALARY_CAP = 50000
 # Set up OpenAI API credentials
 openai.api_key = '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'
 
+import pandas as pd
+
 def load_data():
     # Retrieve data from Baseball-Reference
     br_url = 'https://www.baseball-reference.com/leagues/MLB/2021-standard-batting.shtml'
@@ -31,29 +33,8 @@ def load_data():
     # Clean the data
     if 'RK' in fg_data.columns:
         fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
-        fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus'})
+        fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%
 
-    print("Baseball-Reference data shape:", br_data.shape)
-    print("Baseball-Reference data columns:", br_data.columns)
-    print("FanGraphs data shape:", fg_data.shape)
-    print("FanGraphs data columns:", fg_data.columns)
-    data = pd.merge(br_data, fg_data, on='name')
-    print("Merged data shape:", data.shape)
-    print("Merged data columns:", data.columns)
-    unmatched_names_br = br_data[~br_data['name'].isin(fg_data['name'])]['name']
-    unmatched_names_fg = fg_data[~fg_data['name'].isin(br_data['name'])]['name']
-    print("Unmatched Baseball-Reference names:", unmatched_names_br)
-    print("Unmatched FanGraphs names:", unmatched_names_fg)
-
-    # Match Baseball-Reference player names to FanGraphs player names
-    br_data['name'] = br_data['name'].str.replace('[^\w\s]','').str.lower()
-    fg_data['name'] = fg_data['Name'].str.replace('[^\w\s]','').str.lower()
-
-	# Merge the data
-    data = pd.merge(br_data, fg_data, on='name', how='outer')
-
-    
-    return data
 
 def train_model(data):
     # Split data into features and target
