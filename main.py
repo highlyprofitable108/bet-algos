@@ -38,7 +38,7 @@ def get_predictions(model, data):
 
     return data
 
-def get_optimal_lineup(data):
+def get_optimal_lineup(data, num_simulations=50000):
     # Filter data for players with salary information
     data = data[data['salary'].notnull()]
 
@@ -56,6 +56,9 @@ def get_optimal_lineup(data):
     y_pred = model.predict(X_test)
     data['predicted_salary'] = y_pred
 
+    # Calculate projected points for each player
+    data['projected_points'] = np.random.normal(data['points'].mean(), data['points'].std(), size=len(data))
+
     # Generate optimal lineup
     from ortools.sat.python import cp_model
 
@@ -65,6 +68,7 @@ def get_optimal_lineup(data):
     players = data['name'].tolist()
     salaries = data['salary'].tolist()
     predicted_salaries = data['predicted_salary'].tolist()
+    projected_points = data['projected_points'].tolist()
 
     player_vars = {}
     for i, player in enumerate(players):
@@ -80,11 +84,12 @@ def get_optimal_lineup(data):
     model.Add(sum(player_vars[i] * (salaries[i] + predicted_salaries[i]) for i in range(len(players))) <= SALARY_CAP)
 
     # Define objective function
-    objective_coeffs = [(salaries[i] + predicted_salaries[i]) for i in range(len(players))]
+    objective_coeffs = [(salaries[i] + predicted_salaries[i]) * projected_points[i] for i in range(len(players))]
     model.Maximize(sum(objective_coeffs[i] * player_vars[i] for i in range(len(players))))
 
     # Solve the model
     solver = cp_model.CpSolver()
+    solver.parameters.num_search_workers = 8
     status = solver.Solve(model)
 
     # Extract the optimal lineup
@@ -93,8 +98,24 @@ def get_optimal_lineup(data):
         if solver.Value(player_vars[i]) == 1:
             optimal_lineup.append({
                 'name': players[i],
-                'salary': salaries[i]
+                'position': data.iloc[i]['position'],
+                'salary': salaries[i],
+                'projected_points': projected_points[i]
             })
+
+    # Run simulations to estimate expected points for each lineup
+    lineup_points = []
+    for i in range(num_simulations):
+        lineup_points.append(sum(np.random.choice([player['projected_points'] for player in optimal_lineup], replace=False, size=9)))
+
+    expected_points = np.mean(lineup_points)
+
+    # Add expected points to lineup information
+    for player in optimal_lineup:
+        player['expected_points'] = player['projected_points'] / expected_points * 100
+
+    # Sort lineup by expected points
+    optimal_lineup = sorted(optimal_lineup, key=lambda x: x['expected_points'], reverse=True)
 
     return optimal_lineup
 
@@ -118,9 +139,11 @@ def main():
 
         # Write lineup to file
         with open(f"output/lineup_{date}_{i+1}.txt", 'w') as f:
+            f.write(f"Lineup {i+1}:\n")
             for player in lineup:
-                f.write(f"{player['name']} - ${player['salary']}\n")
+                f.write(f"{player['name']} ({player['position']}) - ${player['salary']} - {player['projected_points']:.2f} points - {player['expected_points']:.2f}% of expected points\n")
             f.write(f"Total salary: ${sum(player['salary'] for player in lineup)}\n")
+            f.write(f"Expected points: {expected_points:.2f}\n")
 
         # Add lineup to list of top lineups
         top_lineups.append(lineup)
