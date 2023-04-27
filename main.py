@@ -1,6 +1,6 @@
 import datetime
-import numpy
 import pandas as pd
+import numpy as np
 
 # Define constants
 SALARY_CAP = 50000
@@ -14,7 +14,18 @@ def load_data():
     br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
     br_data = br_data.rename(columns={'Name': 'name'})
 
-    return br_data
+    # Retrieve data from FanGraphs
+    fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2021&month=0&season1=2021&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
+    fg_data = pd.read_html(fg_url)[10]
+
+    # Clean the data
+    fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
+    fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus'})
+
+    # Merge the data
+    data = pd.merge(br_data, fg_data, on='name')
+
+    return data
 
 def train_model(data):
     # Split data into features and target
@@ -157,3 +168,6 @@ def main():
             print(f"{player['name']} - ${player['salary']}")
         print(f"Total salary: ${sum(player['salary'] for player in lineup)}")
         print()
+
+if __name__ == '__main__':
+    main()
