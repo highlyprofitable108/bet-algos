@@ -1,17 +1,8 @@
-```python
 import pandas as pd
 
 # Define constants
 SALARY_CAP = 50000
 
-def load_data():
-    # Load Lahman data
-    lahman_data = pd.read_csv('data/lahman.csv')
-
-    # Convert salary data to integers
-    lahman_data['salary'] = lahman_data['salary'].astype(int)
-
-    return lahman_data
 
 def train_model(data):
     # Split data into features and target
@@ -36,8 +27,6 @@ def get_predictions(model, data):
 
     return data
 
-
-```python
 def get_optimal_lineup(data, pricing_data):
     # Filter data for players with salary information
     data = data[data['salary'].notnull()]
