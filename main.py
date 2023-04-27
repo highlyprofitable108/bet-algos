@@ -1,12 +1,23 @@
+import datetime
 import pandas as pd
 
 # Define constants
 SALARY_CAP = 50000
 
+def load_data():
+    # Retrieve data from Baseball-Reference
+    br_url = 'https://www.baseball-reference.com/leagues/MLB/2021-standard-batting.shtml'
+    br_data = pd.read_html(br_url)[0]
+
+    # Clean the data
+    br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
+    br_data = br_data.rename(columns={'Name': 'name'})
+
+    return br_data
 
 def train_model(data):
     # Split data into features and target
-    X = data.drop(['name', 'salary', 'position', 'team'], axis=1)
+    X = data.drop(['name', 'salary'], axis=1)
     y = data['salary']
 
     # Train a linear regression model
@@ -18,21 +29,21 @@ def train_model(data):
 
 def get_predictions(model, data):
     # Make predictions on the data
-    X = data.drop(['name', 'salary', 'position', 'team'], axis=1)
+    X = data.drop(['name'], axis=1)
     predictions = model.predict(X)
 
-    # Combine predictions with player names and positions
-    data = data[['name', 'position', 'salary']].copy()
-    data['predicted_score'] = predictions
+    # Combine predictions with player names
+    data = data[['name', 'salary']].copy()
+    data['predicted_salary'] = predictions
 
     return data
 
-def get_optimal_lineup(data, pricing_data):
+def get_optimal_lineup(data):
     # Filter data for players with salary information
     data = data[data['salary'].notnull()]
 
     # Split data into features and target
-    X = data.drop(['name', 'salary', 'position'], axis=1)
+    X = data.drop(['name', 'salary'], axis=1)
     y = data['salary']
 
     # Train a linear regression model
@@ -40,10 +51,10 @@ def get_optimal_lineup(data, pricing_data):
     model = LinearRegression()
     model.fit(X, y)
 
-    # Make predictions on pricing data
-    X_test = pricing_data.drop(['name', 'position'], axis=1)
+    # Make predictions on the data
+    X_test = data.drop(['name', 'salary'], axis=1)
     y_pred = model.predict(X_test)
-    pricing_data['predicted_salary'] = y_pred
+    data['predicted_salary'] = y_pred
 
     # Generate optimal lineup
     from ortools.sat.python import cp_model
@@ -51,29 +62,26 @@ def get_optimal_lineup(data, pricing_data):
     model = cp_model.CpModel()
 
     # Define decision variables
-    players = pricing_data['name'].tolist()
-    salaries = pricing_data['salary'].tolist()
-    predicted_salaries = pricing_data['predicted_salary'].tolist()
-    positions = pricing_data['position'].tolist()
+    players = data['name'].tolist()
+    salaries = data['salary'].tolist()
+    predicted_salaries = data['predicted_salary'].tolist()
 
     player_vars = {}
     for i, player in enumerate(players):
-        for j in range(len(positions)):
-            if positions[j] in player_positions[player]:
-                player_vars[(i, j)] = model.NewBoolVar(f'{player}_{j}')
+        player_vars[i] = model.NewBoolVar(player)
 
     # Define constraints
-    # Each lineup must have exactly one player per position
-    for j in range(len(positions)):
-        model.Add(sum(player_vars[(i, j)] for i in range(len(players))) == 1)
+    # Each lineup must have exactly one player at each position
+    positions = ['C', '1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF']
+    for position in positions:
+        model.Add(sum(player_vars[i] for i in range(len(players)) if position in player) == 1)
 
     # The total salary of the lineup must be less than or equal to the salary cap
-    model.Add(sum(player_vars[(i, j)] * (salaries[i] + predicted_salaries[i]) for i in range(len(players)) for j in range(len(positions))) <= SALARY_CAP)
+    model.Add(sum(player_vars[i] * (salaries[i] + predicted_salaries[i]) for i in range(len(players))) <= SALARY_CAP)
 
     # Define objective function
     objective_coeffs = [(salaries[i] + predicted_salaries[i]) for i in range(len(players))]
-    objective_vars = [player_vars[(i, j)] for i in range(len(players)) for j in range(len(positions))]
-    model.Maximize(sum(objective_coeffs[i] * objective_vars[i] for i in range(len(objective_vars))))
+    model.Maximize(sum(objective_coeffs[i] * player_vars[i] for i in range(len(players))))
 
     # Solve the model
     solver = cp_model.CpSolver()
@@ -81,15 +89,12 @@ def get_optimal_lineup(data, pricing_data):
 
     # Extract the optimal lineup
     optimal_lineup = []
-    for j in range(len(positions)):
-        for i in range(len(players)):
-            if solver.Value(player_vars[(i, j)]) == 1:
-                optimal_lineup.append({
-                    'name': players[i],
-                    'position': positions[j],
-                    'salary': salaries[i]
-                })
-                break
+    for i in range(len(players)):
+        if solver.Value(player_vars[i]) == 1:
+            optimal_lineup.append({
+                'name': players[i],
+                'salary': salaries[i]
+            })
 
     return optimal_lineup
 
@@ -97,34 +102,34 @@ def main():
     # Load data
     data = load_data()
 
-    # Train model
+    # Generate pricing data for today's date
+    date = datetime.date.today().strftime('%Y-%m-%d')
+    pricing_data = pd.DataFrame({'name': data['name'], 'position': data['position'], 'salary': data['salary']})
+
+    # Train model and get predictions
     model = train_model(data)
+    predictions = get_predictions(model, data)
 
-    # Loop through dates and generate top 10 lineups for each day
-    for date in pd.date_range(start='2022-01-01', end='2022-01-10'):
-        # Filter data for current date
-        date_data = data[data['date'] == date]
+    # Generate top 10 lineups for today's date
+    top_lineups = []
+    for i in range(10):
+        # Get optimal lineup
+        lineup = get_optimal_lineup(predictions)
 
-        # Get predictions for current date
-        predictions = get_predictions(model, date_data)
-
-        # Load pricing data for current date
-        pricing_file = f"data/pricing_{date.strftime('%Y-%m-%d')}.csv"
-        pricing = pd.read_csv(pricing_file)
-
-        # Generate top 10 lineups for current date
-        for i in range(10):
-            # Get optimal lineup
-            lineup = get_optimal_lineup(predictions, pricing)
-
-            # Write lineup to file
-            with open(f"output/lineup_{date.strftime('%Y-%m-%d')}_{i+1}.txt", 'w') as f:
-                for player in lineup:
-                    f.write(f"{player['name']} ({player['position']}) - ${player['salary']}\n")
-
-            # Remove players from pricing data
+        # Write lineup to file
+        with open(f"output/lineup_{date}_{i+1}.txt", 'w') as f:
             for player in lineup:
-                pricing = pricing[pricing['name'] != player['name']]
+                f.write(f"{player['name']} - ${player['salary']}\n")
+            f.write(f"Total salary: ${sum(player['salary'] for player in lineup)}\n")
 
-if __name__ == '__main__':
-    main()
+        # Add lineup to list of top lineups
+        top_lineups.append(lineup)
+
+    # Print top 10 lineups
+    print(f"Top 10 lineups for {date}:")
+    for i, lineup in enumerate(top_lineups):
+        print(f"Lineup {i+1}:")
+        for player in lineup:
+            print(f"{player['name']} - ${player['salary']}")
+        print(f"Total salary: ${sum(player['salary'] for player in lineup)}")
+        print()
