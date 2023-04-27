@@ -36,27 +36,71 @@ def get_predictions(model, data):
 
     return data
 
-def get_optimal_lineup(pricing_file_path):
-    # Load data from Lahman database
-    lahman_data = pd.read_csv('data/lahman_data.csv')
 
-    # Retrieve data from Baseball-Reference
-    br_url = 'https://www.baseball-reference.com/leagues/MLB/2021-standard-batting.shtml'
-    br_data = pd.read_html(br_url)[0]
+```python
+def get_optimal_lineup(data, pricing_data):
+    # Filter data for players with salary information
+    data = data[data['salary'].notnull()]
 
-    # Retrieve data from FanGraphs
-    fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2021&month=0&season1=2021&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
-    fg_data = pd.read_html(fg_url)[10]
+    # Split data into features and target
+    X = data.drop(['name', 'salary', 'position'], axis=1)
+    y = data['salary']
 
-    # Clean and merge the data
-    br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
-    br_data = br_data.rename(columns={'Name': 'Player'})
-    fg_data = fg_data.rename(columns={'Name': 'Player'})
-    combined_data = pd.merge(lahman_data, br_data, on='Player', how='outer')
-    combined_data = pd.merge(combined_data, fg_data, on='Player', how='outer')
+    # Train a linear regression model
+    from sklearn.linear_model import LinearRegression
+    model = LinearRegression()
+    model.fit(X, y)
+
+    # Make predictions on pricing data
+    X_test = pricing_data.drop(['name', 'position'], axis=1)
+    y_pred = model.predict(X_test)
+    pricing_data['predicted_salary'] = y_pred
 
     # Generate optimal lineup
-    # ...
+    from ortools.sat.python import cp_model
+
+    model = cp_model.CpModel()
+
+    # Define decision variables
+    players = pricing_data['name'].tolist()
+    salaries = pricing_data['salary'].tolist()
+    predicted_salaries = pricing_data['predicted_salary'].tolist()
+    positions = pricing_data['position'].tolist()
+
+    player_vars = {}
+    for i, player in enumerate(players):
+        for j in range(len(positions)):
+            if positions[j] in player_positions[player]:
+                player_vars[(i, j)] = model.NewBoolVar(f'{player}_{j}')
+
+    # Define constraints
+    # Each lineup must have exactly one player per position
+    for j in range(len(positions)):
+        model.Add(sum(player_vars[(i, j)] for i in range(len(players))) == 1)
+
+    # The total salary of the lineup must be less than or equal to the salary cap
+    model.Add(sum(player_vars[(i, j)] * (salaries[i] + predicted_salaries[i]) for i in range(len(players)) for j in range(len(positions))) <= SALARY_CAP)
+
+    # Define objective function
+    objective_coeffs = [(salaries[i] + predicted_salaries[i]) for i in range(len(players))]
+    objective_vars = [player_vars[(i, j)] for i in range(len(players)) for j in range(len(positions))]
+    model.Maximize(sum(objective_coeffs[i] * objective_vars[i] for i in range(len(objective_vars))))
+
+    # Solve the model
+    solver = cp_model.CpSolver()
+    status = solver.Solve(model)
+
+    # Extract the optimal lineup
+    optimal_lineup = []
+    for j in range(len(positions)):
+        for i in range(len(players)):
+            if solver.Value(player_vars[(i, j)]) == 1:
+                optimal_lineup.append({
+                    'name': players[i],
+                    'position': positions[j],
+                    'salary': salaries[i]
+                })
+                break
 
     return optimal_lineup
 
