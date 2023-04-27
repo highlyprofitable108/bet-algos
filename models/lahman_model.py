@@ -36,34 +36,29 @@ def get_predictions(model, data):
 
     return data
 
-def get_optimal_lineup(predictions, pricing):
-    # Combine predictions and pricing data
-    data = pd.concat([predictions, pricing], axis=1)
+def get_optimal_lineup(pricing_file_path):
+    # Load data from Lahman database
+    lahman_data = pd.read_csv('data/lahman_data.csv')
 
-    # Sort by predicted score in descending order
-    data = data.sort_values(by='predicted_score', ascending=False)
+    # Retrieve data from Baseball-Reference
+    br_url = 'https://www.baseball-reference.com/leagues/MLB/2021-standard-batting.shtml'
+    br_data = pd.read_html(br_url)[0]
 
-    # Select the top 9 players by predicted score
-    top_players = data.head(9)
+    # Retrieve data from FanGraphs
+    fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2021&month=0&season1=2021&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
+    fg_data = pd.read_html(fg_url)[10]
 
-    # Calculate the total cost of the top players
-    total_cost = top_players['salary'].sum()
+    # Clean and merge the data
+    br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
+    br_data = br_data.rename(columns={'Name': 'Player'})
+    fg_data = fg_data.rename(columns={'Name': 'Player'})
+    combined_data = pd.merge(lahman_data, br_data, on='Player', how='outer')
+    combined_data = pd.merge(combined_data, fg_data, on='Player', how='outer')
 
-    # Check if total cost is within the salary cap
-    if total_cost > SALARY_CAP:
-        # If total cost is over the salary cap, select the top 9 players within the salary cap
-        top_players = data[data['salary'] <= SALARY_CAP].head(9)
+    # Generate optimal lineup
+    # ...
 
-    # Sort by position and then by predicted score in descending order
-    top_players = top_players.sort_values(by=['position', 'predicted_score'], ascending=[True, False])
-
-    # Create the lineup as a list of dictionaries
-    lineup = []
-    for _, row in top_players.iterrows():
-        player = {'name': row['name'], 'position': row['position'], 'price': row['salary']}
-        lineup.append(player)
-
-    return lineup
+    return optimal_lineup
 
 def main():
     # Load data
