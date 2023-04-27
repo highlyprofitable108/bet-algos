@@ -28,7 +28,9 @@ def generate_optimal_lineup(data, pricing_data, num_lineups=10):
         status = solver.Solve(model)
         players = data['Player'].tolist()
         lineup = pd.Series([players[x] for x in lineup_vars], index=position_names)
-        lineups.append(lineup)
+        lineup_points = sum([data.loc[lineup_vars[i], 'Points'] for i in range(len(position_names))])
+        player_points = [data.loc[lineup_vars[i], 'Points'] for i in range(len(position_names))]
+        lineups.append({'lineup': lineup, 'lineup_points': lineup_points, 'player_points': player_points})
         # Add constraint to exclude previously found lineup
         excluded_vars = [model.NewBoolVar(f'excluded_{i}') for i in range(len(lineup_vars))]
         for j, player in enumerate(lineup_vars):
