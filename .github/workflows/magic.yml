@@ -1,23 +1,27 @@
-name: Run baseball analysis
+name: Generate Lineups
 
 on:
   schedule:
-    - cron: '0 8 * * *'
-  workflow_dispatch:
+    - cron: '0 12 * * *' # Run every day at 12pm UTC
+  workflow_dispatch: # Triggered manually
 
 jobs:
-  run:
+  generate-lineups:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: '3.9'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Run analysis
+        pip install pandas scikit-learn ortools
+
+    - name: Generate lineups
       run: |
-        python run_analysis.py
+        python main.py
