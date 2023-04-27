@@ -28,14 +28,14 @@ def load_data():
         print(f"Table {i}:")
         print(table.head())
 
-    fg_data = fg_tables[correct_table_index]
+    # fg_data = fg_tables[correct_table_index]
     fg_data.columns = ['name', 'team', 'games', 'plate_appearances', 'home_runs', 'runs', 'runs_batted_in', 'stolen_bases', 'walk_percentage', 'strikeout_percentage', 'isolated_power', 'batting_average_on_balls_in_play', 'batting_average', 'on_base_percentage', 'slugging_percentage', 'weighted_on_base_average', 'weighted_runs_created_plus']
 
 
     # Clean the data
     if 'RK' in fg_data.columns:
         fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
-    fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus'})
+        fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus'})
 
     print("Baseball-Reference data shape:", br_data.shape)
     print("Baseball-Reference data columns:", br_data.columns)
