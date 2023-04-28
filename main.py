@@ -131,3 +131,4 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
 
     # Sort lineup by expected points
     optimal_lineup = sorted(optimal_lineup, key=lambda
+    
