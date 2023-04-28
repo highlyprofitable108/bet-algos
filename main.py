@@ -20,7 +20,7 @@ def load_data():
     print("Loading data...")
 
     # Retrieve data from Baseball-Reference
-    br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
+    br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml'
 
     # read the HTML table into a pandas dataframe
     tables = pd.read_html(br_url)
