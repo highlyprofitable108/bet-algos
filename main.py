@@ -22,12 +22,16 @@ def load_data():
 
     # Clean the data
     if 'Rk' in br_data.columns:
-        br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
-        br_data = br_data.rename(columns={'Name': 'name'})
+    	br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
+    	br_data = br_data.rename(columns={'Name': 'name'})
+
 
     # Retrieve data from FanGraphs
     fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2023&month=0&season1=2023&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
-    fg_data = pd.read_html(fg_url)[11]
+    fg_data = pd.read_html(fg_url, header=[0, 1])[0]
+	fg_data.columns = fg_data.columns.map(' '.join)
+	fg_data = fg_data.rename(columns={'player name': 'name'})
+
 
     # Clean the data
     if 'RK' in fg_data.columns:
