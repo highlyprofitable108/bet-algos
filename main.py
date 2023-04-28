@@ -11,7 +11,8 @@ from ortools.sat.python import cp_model
 SALARY_CAP = 50000
 
 # Set up OpenAI API credentials
-openai.api_key = 'your_api_key_here'
+import os
+openai.api_key = os.environ['OPENAI_API_KEY']
 
 def load_data():
     # Retrieve data from Baseball-Reference
