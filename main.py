@@ -57,4 +57,77 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
     # Merge the data from Baseball-Reference and FanGraphs
     data = pd.merge(br_data, fg_data, on='name', how='inner')
 
-   
+    # Filter data for players with salary information
+    data = data[data['salary'].notnull()]
+
+    # Split data into features and target
+    X = data.drop(['name', 'salary'], axis=1)
+    y = data['salary']
+
+    # Train a random forest regression model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X, y)
+
+    # Make predictions on the data
+    X_test = data.drop(['name', 'salary'], axis=1)
+    y_pred = model.predict(X_test)
+    data['predicted_salary'] = y_pred
+
+    # Calculate projected points for each player
+    data['projected_points'] = np.random.normal(data['points'].mean(), data['points'].std(), size=len(data))
+
+    # Generate optimal lineup
+    model = cp_model.CpModel()
+
+    # Define decision variables
+    players = data['name'].tolist()
+    salaries = data['salary'].tolist()
+    predicted_salaries = data['predicted_salary'].tolist()
+    projected_points = data['projected_points'].tolist()
+
+    player_vars = {}
+    for i, player in enumerate(players):
+        player_vars[i] = model.NewBoolVar(player)
+
+    # Define constraints
+    # Each lineup must have exactly one player at each position
+    positions = ['C', '1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF']
+    for position in positions:
+        model.Add(sum(player_vars[i] for i in range(len(players)) if position in player) == 1)
+
+    # The total salary of the lineup must be less than or equal to the salary cap
+    model.Add(sum(player_vars[i] * (salaries[i] + predicted_salaries[i]) for i in range(len(players))) <= SALARY_CAP)
+
+    # Define objective function
+    objective_coeffs = [(salaries[i] + predicted_salaries[i]) * projected_points[i] for i in range(len(players))]
+    model.Maximize(sum(objective_coeffs[i] * player_vars[i] for i in range(len(players))))
+
+    # Solve the model
+    solver = cp_model.CpSolver()
+    solver.parameters.num_search_workers = 8
+    status = solver.Solve(model)
+
+    # Extract the optimal lineup
+    optimal_lineup = []
+    for i in range(len(players)):
+        if solver.Value(player_vars[i]) == 1:
+            optimal_lineup.append({
+                'name': players[i],
+                'position': data.iloc[i]['position'],
+                'salary': salaries[i],
+                'projected_points': projected_points[i]
+            })
+
+    # Run simulations to estimate expected points for each lineup
+    lineup_points = []
+    for i in range(num_simulations):
+        lineup_points.append(sum(np.random.choice([player['projected_points'] for player in optimal_lineup], replace=False, size=9)))
+
+    expected_points = np.mean(lineup_points)
+
+    # Add expected points to lineup information
+    for player in optimal_lineup:
+        player['expected_points'] = player['projected_points'] / expected_points * 100
+
+    # Sort lineup by expected points
+    optimal_lineup = sorted(optimal_lineup, key=lambda
