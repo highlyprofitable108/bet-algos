@@ -23,31 +23,12 @@ def load_data():
 
     # Clean the data
     if 'Rk' in br_data.columns:
-    	br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
-    	br_data = br_data.rename(columns={'Name': 'name'})
+        br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
+        br_data = br_data.rename(columns={'Name': 'name'})
 
-
-    # Retrieve data from FanGraphs
-    fg_url = 'https://www.fangraphs.com/leaders.aspx?pos=all&stats=bat&lg=all&qual=0&type=8&season=2023&month=0&season1=2023&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=&enddate='
-    response = requests.get(fg_url)
-    print(response.text)
-
-    fg_data = pd.read_html(fg_url, header=[0, 1])[0]
-    fg_data.columns = fg_data.columns.map(' '.join)
-    fg_data = fg_data.rename(columns={'player name': 'name'})
-
-
-    # Clean the data
-    if 'RK' in fg_data.columns:
-        fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
-        fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus', 'FIP': 'fielding_independent_pitching'})
-
-    print("Data loaded")  # Added print statement
+    print("Data loaded")
     print("br_data columns:", br_data.columns)
-    print("fg_data columns:", fg_data.columns)
-    return br_data, fg_data
-
-    return br_data, fg_data
+    return br_data
 
 def train_model(data):
     # Split data into features and target
@@ -71,53 +52,19 @@ def get_predictions(model, data):
 
     return data
 
-def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
+def get_optimal_lineup(br_data, num_simulations=100000):
     # Check for missing values and duplicates
     br_data.dropna(inplace=True)
-    fg_data.dropna(inplace=True)
     br_data.drop_duplicates(inplace=True)
-    fg_data.drop_duplicates(inplace=True)
-
-    # Merge the data from Baseball-Reference and FanGraphs
-    data = pd.merge(br_data, fg_data, on='name', how='inner')
 
     # Filter data for players with salary information
-    data = data[data['salary'].notnull()]
-
-    # Create new features based on existing ones
-    data['OPS'] = data['OBP'] + data['SLG']
-    data['K/BB'] = data['SO'] / data['BB']
-
-    # Split data into features and target
-    X = data.drop(['name', 'salary'], axis=1)
-    y = data['salary']
-
-    # Perform a grid search to find the best hyperparameters for the model
-    param_grid = {
-        'n_estimators': [100, 200, 300],
-        'max_depth': [5, 10, 15],
-        'min_samples_split': [2, 5, 10]
-    }
-
-    model = RandomForestRegressor(random_state=42)
-    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, n_jobs=-1)
-    grid_search.fit(X_train, y_train)
-    best_params = grid_search.best_params_
-    model = RandomForestRegressor(n_estimators=best_params['n_estimators'],
-                                   max_depth=best_params['max_depth'],
-                                   min_samples_split=best_params['min_samples_split'],
-                                   random_state=42)
+    data = br_data[br_data['salary'].notnull()]
 
     # Train a random forest regression model
-    model.fit(X, y)
+    model = train_model(data)
 
     # Make predictions on the data
-    X_test = data.drop(['name', 'salary'], axis=1)
-    y_pred = model.predict(X_test)
-    data['predicted_salary'] = y_pred
-
-    # Calculate projected points for each player
-    data['projected_points'] = np.random.normal(data['points'].mean(), data['points'].std(), size=len(data))
+    data_with_predictions = get_predictions(model, data)
 
     # Generate optimal lineup
     model = cp_model.CpModel()
@@ -182,18 +129,12 @@ def main():
     # Start the script
     print("Script started")
 
-    # Load the data from Baseball-Reference and FanGraphs
-    br_data, fg_data = load_data()
-    print("Data loaded")  # Added print statement
-
-    # Train a random forest regression model on the data
-    model = train_model(br_data)
-
-    # Make salary predictions on the FanGraphs data
-    fg_data_with_predictions = get_predictions(model, fg_data)
+    # Load the data from Baseball-Reference
+    br_data = load_data()
+    print("Data loaded")
 
     # Generate the optimal lineup
-    optimal_lineup = get_optimal_lineup(br_data, fg_data_with_predictions)
+    optimal_lineup = get_optimal_lineup(br_data)
 
     # Print the optimal lineup
     print("Optimal Lineup:")
