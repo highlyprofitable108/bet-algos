@@ -40,13 +40,16 @@ def load_data():
     return br_data
 
 def train_model(data):
-    # Split data into features and target
-    X = data.drop(['name', 'Salary'], axis=1)
+    # Split the data into input features (X) and output variable (y)
+    X = data.drop(['Salary'], axis=1)
     y = data['Salary']
 
-    # Train a random forest regression model
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X, y)
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Fit a linear regression model to the training data
+    model = LinearRegression()
+    model.fit(X_train, y_train)
 
     return model
 
