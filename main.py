@@ -14,6 +14,7 @@ SALARY_CAP = 50000
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 def load_data():
+    print("Loading data...")  # Added print statement
     # Retrieve data from Baseball-Reference
     br_url = 'https://www.baseball-reference.com/leagues/MLB/2023-standard-batting.shtml'
     br_data = pd.read_html(br_url)[0]
@@ -32,6 +33,7 @@ def load_data():
         fg_data = fg_data.drop(fg_data.index[fg_data['RK'] == 'RK'])
         fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus', 'FIP': 'fielding_independent_pitching'})
 
+	print("Data loaded")  # Added print statement   
     return br_data, fg_data
 
 def train_model(data):
@@ -162,3 +164,27 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
 def simulate_lineup(lineup):
     """Simulate a lineup and return the total points scored."""
     return sum(np.random.choice([player['projected_points'] for player in lineup], replace=False, size=9))
+
+def main():
+    # Start the script
+    print("Script started")
+
+    # Load the data from Baseball-Reference and FanGraphs
+    br_data, fg_data = load_data()
+
+    # Train a random forest regression model on the data
+    model = train_model(br_data)
+
+    # Make salary predictions on the FanGraphs data
+    fg_data_with_predictions = get_predictions(model, fg_data)
+
+    # Generate the optimal lineup
+    optimal_lineup = get_optimal_lineup(br_data, fg_data_with_predictions)
+
+    # Print the optimal lineup
+    print("Optimal Lineup:")
+    for player in optimal_lineup:
+        print(f"{player['position']}: {player['name']} (Salary: {player['salary']}, Expected Points: {player['expected_points']})")
+
+if __name__ == "__main__":
+    main()
