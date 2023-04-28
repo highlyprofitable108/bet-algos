@@ -1,6 +1,9 @@
 import openai
 import pandas as pd
 import numpy as np
+from ortools.sat.python import cp_model
+from sklearn.model_selection import GridSearchCV
+from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestRegressor
 from ortools.sat.python import cp_model
 
@@ -54,18 +57,43 @@ def get_predictions(model, data):
     return data
 
 def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
+    # Check for missing values and duplicates
+    br_data.dropna(inplace=True)
+    fg_data.dropna(inplace=True)
+    br_data.drop_duplicates(inplace=True)
+    fg_data.drop_duplicates(inplace=True)
+
     # Merge the data from Baseball-Reference and FanGraphs
     data = pd.merge(br_data, fg_data, on='name', how='inner')
 
     # Filter data for players with salary information
     data = data[data['salary'].notnull()]
 
+    # Create new features based on existing ones
+    data['OPS'] = data['OBP'] + data['SLG']
+    data['K/BB'] = data['SO'] / data['BB']
+
     # Split data into features and target
     X = data.drop(['name', 'salary'], axis=1)
     y = data['salary']
 
+    # Perform a grid search to find the best hyperparameters for the model
+    param_grid = {
+        'n_estimators': [100, 200, 300],
+        'max_depth': [5, 10, 15],
+        'min_samples_split': [2, 5, 10]
+    }
+
+    model = RandomForestRegressor(random_state=42)
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5, n_jobs=-1)
+    grid_search.fit(X_train, y_train)
+    best_params = grid_search.best_params_
+    model = RandomForestRegressor(n_estimators=best_params['n_estimators'],
+                                   max_depth=best_params['max_depth'],
+                                   min_samples_split=best_params['min_samples_split'],
+                                   random_state=42)
+
     # Train a random forest regression model
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X, y)
 
     # Make predictions on the data
@@ -100,34 +128,5 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
 
     # Define objective function
     objective_coeffs = [(salaries[i] + predicted_salaries[i]) * projected_points[i] for i in range(len(players))]
-    model.Maximize(sum(objective_coeffs[i] * player_vars[i] for i in range(len(players))))
+    model.Maximize(sum(objective_coeffs
 
-    # Solve the model
-    solver = cp_model.CpSolver()
-    solver.parameters.num_search_workers = 8
-    status = solver.Solve(model)
-
-    # Extract the optimal lineup
-    optimal_lineup = []
-    for i in range(len(players)):
-        if solver.Value(player_vars[i]) == 1:
-            optimal_lineup.append({
-                'name': players[i],
-                'position': data.iloc[i]['position'],
-                'salary': salaries[i],
-                'projected_points': projected_points[i]
-            })
-
-    # Run simulations to estimate expected points for each lineup
-    lineup_points = []
-    for i in range(num_simulations):
-        lineup_points.append(sum(np.random.choice([player['projected_points'] for player in optimal_lineup], replace=False, size=9)))
-
-    expected_points = np.mean(lineup_points)
-
-    # Add expected points to lineup information
-    for player in optimal_lineup:
-        player['expected_points'] = player['projected_points'] / expected_points * 100
-
-    # Sort lineup by expected points
-    optimal_lineup = sorted(optimal_lineup, key=lambda)
