@@ -32,8 +32,8 @@ def load_data():
 
 def train_model(data):
     # Split data into features and target
-    X = data.drop(['name', 'salary'], axis=1)
-    y = data['salary']
+    X = data.drop(['name', 'Salary'], axis=1)
+    y = data['Salary']
 
     # Train a random forest regression model
     model = RandomForestRegressor(n_estimators=100, random_state=42)
@@ -47,7 +47,7 @@ def get_predictions(model, data):
     predictions = model.predict(X)
 
     # Combine predictions with player names
-    data = data[['name', 'salary']].copy()
+    data = data[['name', 'Salary']].copy()
     data['predicted_salary'] = predictions
 
     return data
@@ -58,8 +58,8 @@ def get_optimal_lineup(br_data, num_simulations=100000):
     br_data.drop_duplicates(inplace=True)
 
     # Filter data for players with salary information
-    data = br_data[br_data['salary'].notnull()]
-
+    data = br_data[br_data['Salary'].notnull()]
+    
     # Train a random forest regression model
     model = train_model(data)
 
