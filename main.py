@@ -130,5 +130,5 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
         player['expected_points'] = player['projected_points'] / expected_points * 100
 
     # Sort lineup by expected points
-    optimal_lineup = sorted(optimal_lineup, key=lambda
+    optimal_lineup = sorted(optimal_lineup, key=lambda)
     
