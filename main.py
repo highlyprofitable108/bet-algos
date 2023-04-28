@@ -16,14 +16,14 @@ SALARY_CAP = 50000
 # Set up OpenAI API credentials
 openai.api_key = os.environ['OPENAI_API_KEY']
 
-def load_data():
+def load_data(): 
     print("Loading data...")
 
     # Retrieve data from Baseball-Reference
     br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
     
     # read the HTML table into a pandas dataframe
-    br_data = pd.read_html(br_url)[0]
+    br_data = pd.read_html(br_url)[1]
     
     # filter the rows based on the first column
     filter_rows = br_data.iloc[:, 0].isin(['Rk', '1'])
