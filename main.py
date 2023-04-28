@@ -18,8 +18,8 @@ def load_data():
     print("Loading data...")
 
     # Retrieve data from Baseball-Reference
-    br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
-    br_data = pd.read_html(br_url)[0]
+    br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml'
+    br_data = pd.read_html(br_url)[1]
 
     # Clean the data
     if 'Rk' in br_data.columns:
