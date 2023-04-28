@@ -171,6 +171,7 @@ def main():
 
     # Load the data from Baseball-Reference and FanGraphs
     br_data, fg_data = load_data()
+    print("Data loaded")  # Added print statement
 
     # Train a random forest regression model on the data
     model = train_model(br_data)
