@@ -21,23 +21,16 @@ def load_data():
 
     # Retrieve data from Baseball-Reference
     br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
-    print("URL:", br_url)
 
     # read the HTML table into a pandas dataframe
-    br_data = pd.read_html(br_url)[1]
-
-    # filter the rows based on the first column
-    filter_rows = br_data.iloc[:, 0].isin(['Rk', '1'])
-
-    # get the index of the first row where the condition is true
-    start_idx = filter_rows.idxmax()
-
-    # slice the dataframe to get the desired table
-    br_data = br_data.iloc[start_idx:, :]
-
-    # reset the index
-    br_data.reset_index(drop=True, inplace=True)
-
+    tables = pd.read_html(br_url)
+    print("Number of tables found:", len(tables))
+    print("Table 1 columns:", tables[0].columns)
+    if len(tables) > 1:
+        print("Table 2 columns:", tables[1].columns)
+        br_data = tables[1]
+    else:
+        br_data = tables[0]
     print("Data loaded")
     print("br_data columns:", br_data.columns)
     return br_data
