@@ -20,10 +20,10 @@ def load_data():
     # Retrieve data from Baseball-Reference
     br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
     # read the HTML table into a pandas dataframe
-	br_data = pd.read_html(br_url)[0]
-
-	# filter the rows based on the first column
-	filter_rows = br_data.iloc[:, 0].isin(['Rk', '1'])
+    br_data = pd.read_html(br_url)[0]
+    
+    # filter the rows based on the first column
+    filter_rows = br_data.iloc[:, 0].isin(['Rk', '1'])
 
 	# get the index of the first row where the condition is true
 	start_idx = filter_rows.idxmax()
