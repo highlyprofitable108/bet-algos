@@ -21,11 +21,6 @@ def load_data():
     br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
     br_data = pd.read_html(br_url)[0]
 
-    # Clean the data
-    if 'Rk' in br_data.columns:
-        br_data = br_data.drop(br_data.index[br_data['Rk'] == 'Rk'])
-        br_data = br_data.rename(columns={'Name': 'name'})
-
     print("Data loaded")
     print("br_data columns:", br_data.columns)
     return br_data
