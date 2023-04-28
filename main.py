@@ -18,7 +18,7 @@ def load_data():
     print("Loading data...")
 
     # Retrieve data from Baseball-Reference
-    br_url = 'https://www.baseball-reference.com/leagues/MLB/2023-value-batting.shtml'
+    br_url = 'https://www.baseball-reference.com/leagues/majors/2023-value-batting.shtml#players_value_batting'
     br_data = pd.read_html(br_url)[0]
 
     # Clean the data
