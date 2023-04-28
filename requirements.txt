@@ -1,6 +1,5 @@
-numpy
-pandas
-scikit-learn
-ortools
-openai
-lxml
+numpy==1.20.3
+pandas==1.2.4
+scikit-learn==0.24.2
+joblib==1.0.1
+ortools==9.1.9490
