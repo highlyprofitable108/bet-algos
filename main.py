@@ -126,7 +126,40 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
     # The total salary of the lineup must be less than or equal to the salary cap
     model.Add(sum(player_vars[i] * (salaries[i] + predicted_salaries[i]) for i in range(len(players))) <= SALARY_CAP)
 
-    # Define objective function
+        # Define objective function
     objective_coeffs = [(salaries[i] + predicted_salaries[i]) * projected_points[i] for i in range(len(players))]
-    model.Maximize(sum(objective_coeffs
+    model.Maximize(sum(objective_coeffs[i] * player_vars[i] for i in range(len(players))))
 
+    # Solve the model
+    solver = cp_model.CpSolver()
+    solver.parameters.num_search_workers = 8
+    status = solver.Solve(model)
+
+    # Extract the optimal lineup
+    optimal_lineup = []
+    for i in range(len(players)):
+        if solver.Value(player_vars[i]) == 1:
+            optimal_lineup.append({
+                'name': players[i],
+                'position': data.iloc[i]['position'],
+                'salary': salaries[i],
+                'projected_points': projected_points[i]
+            })
+
+    # Run simulations to estimate expected points for each lineup
+    lineup_points = Parallel(n_jobs=-1)(delayed(simulate_lineup)(optimal_lineup) for i in range(num_simulations))
+    expected_points = np.mean(lineup_points)
+
+    # Add expected points to lineup information
+    for player in optimal_lineup:
+        player['expected_points'] = player['projected_points'] / expected_points * 100
+
+    # Sort lineup by expected points
+    optimal_lineup = sorted(optimal_lineup, key=lambda x: x['expected_points'], reverse=True)
+
+    return optimal_lineup
+
+
+def simulate_lineup(lineup):
+    """Simulate a lineup and return the total points scored."""
+    return sum(np.random.choice([player['projected_points'] for player in lineup], replace=False, size=9))
