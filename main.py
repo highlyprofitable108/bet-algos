@@ -34,6 +34,10 @@ def load_data():
         fg_data = fg_data.rename(columns={'Name': 'name', 'Team': 'team', 'G': 'games', 'PA': 'plate_appearances', 'HR': 'home_runs', 'R': 'runs', 'RBI': 'runs_batted_in', 'SB': 'stolen_bases', 'BB%': 'walk_percentage', 'K%': 'strikeout_percentage', 'ISO': 'isolated_power', 'BABIP': 'batting_average_on_balls_in_play', 'AVG': 'batting_average', 'OBP': 'on_base_percentage', 'SLG': 'slugging_percentage', 'wOBA': 'weighted_on_base_average', 'wRC+': 'weighted_runs_created_plus', 'FIP': 'fielding_independent_pitching'})
 
     print("Data loaded")  # Added print statement
+    print("br_data columns:", br_data.columns)
+    print("fg_data columns:", fg_data.columns)
+    return br_data, fg_data
+
     return br_data, fg_data
 
 def train_model(data):
