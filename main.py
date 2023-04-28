@@ -1,3 +1,4 @@
+import os
 import openai
 import pandas as pd
 import numpy as np
@@ -5,13 +6,11 @@ from ortools.sat.python import cp_model
 from sklearn.model_selection import GridSearchCV
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestRegressor
-from ortools.sat.python import cp_model
 
 # Define constants
 SALARY_CAP = 50000
 
 # Set up OpenAI API credentials
-import os
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 def load_data():
