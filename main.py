@@ -46,6 +46,10 @@ def train_model(data):
     X = data.drop(['Salary'], axis=1)
     y = data['Salary']
 
+    # Check if there is enough data to split into training and testing sets
+    if len(X) <= 1:
+        raise ValueError('Not enough data to split into training and testing sets')
+
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -54,6 +58,7 @@ def train_model(data):
     model.fit(X_train, y_train)
 
     return model
+
 
 def get_predictions(model, data):
     # Make predictions on the data
