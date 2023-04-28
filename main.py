@@ -160,7 +160,6 @@ def get_optimal_lineup(br_data, fg_data, num_simulations=100000):
 
     return optimal_lineup
 
-
 def simulate_lineup(lineup):
     """Simulate a lineup and return the total points scored."""
     return sum(np.random.choice([player['projected_points'] for player in lineup], replace=False, size=9))
