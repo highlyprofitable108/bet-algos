@@ -199,6 +199,139 @@ Let me know if you have any questions or if there's anything else I can help wit
 
 sports specific day data:
 ```sql
+
+Here's an example of what the SQL create scripts might look like for the tables you described:
+
+#### NFL Team Game Table
+
+```sql
+CREATE TABLE nfl_team_game (
+  game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date DATE NOT NULL,
+  home_team_id INTEGER NOT NULL,
+  away_team_id INTEGER NOT NULL,
+  home_team_score INTEGER NOT NULL,
+  away_team_score INTEGER NOT NULL,
+  spread REAL NOT NULL,
+  over_under REAL NOT NULL,
+  predicted_outcome TEXT NOT NULL,
+  actual_outcome TEXT NOT NULL
+);
+```
+
+#### NFL Player Game Table
+
+```sql
+CREATE TABLE nfl_player_game (
+  game_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  position TEXT NOT NULL,
+  passing_yards INTEGER NOT NULL,
+  passing_touchdowns INTEGER NOT NULL,
+  rushing_yards INTEGER NOT NULL,
+  rushing_touchdowns INTEGER NOT NULL,
+  receiving_yards INTEGER NOT NULL,
+  receiving_touchdowns INTEGER NOT NULL,
+  interceptions INTEGER NOT NULL,
+  fumbles INTEGER NOT NULL,
+  PRIMARY KEY (game_id, player_id)
+);
+```
+
+#### NCAA Football Team Game Table
+
+```sql
+CREATE TABLE ncaa_football_team_game (
+  game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date DATE NOT NULL,
+  home_team_id INTEGER NOT NULL,
+  away_team_id INTEGER NOT NULL,
+  home_team_score INTEGER NOT NULL,
+  away_team_score INTEGER NOT NULL,
+  spread REAL NOT NULL,
+  over_under REAL NOT NULL,
+  predicted_outcome TEXT NOT NULL,
+  actual_outcome TEXT NOT NULL
+);
+```
+
+#### NCAA Football Player Game Table
+
+```sql
+CREATE TABLE ncaa_football_player_game (
+  game_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  position TEXT NOT NULL,
+  passing_yards INTEGER NOT NULL,
+  passing_touchdowns INTEGER NOT NULL,
+  rushing_yards INTEGER NOT NULL,
+  rushing_touchdowns INTEGER NOT NULL,
+  receiving_yards INTEGER NOT NULL,
+  receiving_touchdowns INTEGER NOT NULL,
+  interceptions INTEGER NOT NULL,
+  fumbles INTEGER NOT NULL,
+  PRIMARY KEY (game_id, player_id)
+);
+```
+
+#### MLB Team Game Table
+
+```sql
+CREATE TABLE mlb_team_game (
+  game_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date DATE NOT NULL,
+  home_team_id INTEGER NOT NULL,
+  away_team_id INTEGER NOT NULL,
+  home_team_score INTEGER NOT NULL,
+  away_team_score INTEGER NOT NULL,
+  over_under REAL NOT NULL,
+  predicted_outcome TEXT NOT NULL,
+  actual_outcome TEXT NOT NULL
+);
+```
+
+#### MLB Player Game Table
+
+```sql
+CREATE TABLE mlb_player_game (
+  game_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
+  team_id INTEGER NOT NULL,
+  position TEXT NOT NULL,
+  at_bats INTEGER NOT NULL,
+  hits INTEGER NOT NULL,
+  home_runs INTEGER NOT NULL,
+  runs_batted_in INTEGER NOT NULL,
+  strikeouts INTEGER NOT NULL,
+  walks INTEGER NOT NULL,
+  PRIMARY KEY (game_id, player_id)
+);
+```
+
+#### NCAA Basketball Team Game Table
+
+```sql
+CREATE TABLE ncaa_basketball_team_game (
+  game_id INTEGER PRIMARY KEY AUTOINCREMEN
+  date DATE NOT NULL,
+  home_team_id INTEGER NOT NULL,
+  away_team_id INTEGER NOT NULL,
+  home_team_score INTEGER NOT NULL,
+  away_team_score INTEGER NOT NULL,
+  over_under REAL NOT NULL,
+  predicted_outcome TEXT NOT NULL,
+  actual_outcome TEXT NOT NULL
+);
+```
+
+#### NCAA Basketball Player Game Table
+
+```sql
+CREATE TABLE ncaa_basketball_player_game (
+  game_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
   team_id INTEGER NOT NULL,
   minutes_played INTEGER NOT NULL,
   points_scored INTEGER NOT NULL,
