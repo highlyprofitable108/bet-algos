@@ -195,3 +195,95 @@ Sure, here are the steps to set up testing for the sports outcome predictor appl
    This workflow runs on new issue creation, and adds a comment to the issue that includes a link to the test results in the GitHub Actions console.
 
 Let me know if you have any questions or if there's anything else I can help with!
+
+
+sports specific day data:
+```sql
+  team_id INTEGER NOT NULL,
+  minutes_played INTEGER NOT NULL,
+  points_scored INTEGER NOT NULL,
+  rebounds INTEGER NOT NULL,
+  assists INTEGER NOT NULL,
+  steals INTEGER NOT NULL,
+  blocks INTEGER NOT NULL,
+  turnovers INTEGER NOT NULL,
+  PRIMARY KEY (game_id, player_id)
+);
+```
+
+#### Golf Tournament Table
+
+```sql
+CREATE TABLE golf_tournament (
+  tournament_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  location TEXT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  winner_id INTEGER NOT NULL,
+  runner_up_id INTEGER NOT NULL
+);
+```
+
+#### Golf Round Table
+
+```sql
+CREATE TABLE golf_round (
+  round_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tournament_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
+  round_number INTEGER NOT NULL,
+  score INTEGER NOT NULL,
+  PRIMARY KEY (tournament_id, player_id, round_number)
+);
+```
+
+#### Grade 1 Horse Race Table
+
+```sql
+CREATE TABLE grade_1_horse_race (
+  race_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date DATE NOT NULL,
+  location TEXT NOT NULL,
+  distance TEXT NOT NULL,
+  surface TEXT NOT NULL,
+  winning_horse_id INTEGER NOT NULL,
+  runner_up_id INTEGER NOT NULL,
+  time REAL NOT NULL
+);
+```
+
+#### Horse Table
+
+```sql
+CREATE TABLE horse (
+  horse_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  sire_id INTEGER NOT NULL,
+  dam_id INTEGER NOT NULL
+);
+```
+
+#### Jockey Table
+
+```sql
+CREATE TABLE jockey (
+  jockey_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  nationality TEXT NOT NULL,
+  experience INTEGER NOT NULL
+);
+```
+
+#### Trainer Table
+
+```sql
+CREATE TABLE trainer (
+  trainer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  nationality TEXT NOT NULL,
+  experience INTEGER NOT NULL
+);
+```
+
+These are just examples, and you may need to adjust the table schema to fit the specific needs of your application.
