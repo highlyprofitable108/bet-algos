@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 from bs4 import BeautifulSoup
 
-def read_data_file(file_path):
+def read_data_file(file_path, sport):
     # Open the file and read the contents
     with open(file_path) as f:
         file_contents = f.read()
@@ -24,7 +24,23 @@ def read_data_file(file_path):
     # Insert the parsed data into the database
     conn = sqlite3.connect('sports_data.db')
     cur = conn.cursor()
-    for row in data.itertuples(index=False):
-        cur.execute('INSERT INTO game (date, home_team_id, away_team_id, league_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?, ?, ?)', row)
+    if sport == "nfl":
+        for row in data.itertuples(index=False):
+            cur.execute('INSERT INTO nfl_game (date, home_team_id, away_team_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?, ?)', row)
+    elif sport == "ncaa_football":
+        for row in data.itertuples(index=False):
+            cur.execute('INSERT INTO ncaa_football_game (date, home_team_id, away_team_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?, ?)', row)
+    elif sport == "mlb":
+        for row in data.itertuples(index=False):
+            cur.execute('INSERT INTO mlb_game (date, home_team_id, away_team_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?, ?)', row)
+    elif sport == "ncaa_basketball":
+        for row in data.itertuples(index=False):
+            cur.execute('INSERT INTO ncaa_basketball_game (date, home_team_id, away_team_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?, ?)', row)
+    elif sport == "golf":
+        for row in data.itertuples(index=False):
+            cur.execute('INSERT INTO golf_tournament (date, player_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?)', row)
+    elif sport == "horse_racing":
+        for row in data.itertuples(index=False):
+            cur.execute('INSERT INTO horse_race (date, horse_id, predicted_outcome, actual_outcome) VALUES (?, ?, ?, ?)', row)
     conn.commit()
     conn.close()
