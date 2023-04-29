@@ -314,7 +314,7 @@ CREATE TABLE mlb_player_game (
 
 ```sql
 CREATE TABLE ncaa_basketball_team_game (
-  game_id INTEGER PRIMARY KEY AUTOINCREMEN
+  game_id INTEGER PRIMARY KEY AUTOINCREMENT,
   date DATE NOT NULL,
   home_team_id INTEGER NOT NULL,
   away_team_id INTEGER NOT NULL,
